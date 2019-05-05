@@ -1,3 +1,4 @@
+# Import libraries
 from bs4 import BeautifulSoup
 from requests import get
 import pandas as pd
@@ -8,40 +9,30 @@ import datetime as dt
 import regex as re
 from google.cloud import bigquery
 
-project = 'your-project'
-dataset_table_id = 'dataset.table_id'
-client = bigquery.Client()
-
-def upload_to_bq(request):
-    headers = ({'User-Agent':
-            'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'})
-    url = "https://www.kleiderkreisel.de/kleidung?order=newest_first&search_text=hemd%20minimum%20xl"
-    response = get(url, headers=headers)
-    html_soup = BeautifulSoup(response.text, 'html.parser')
-    
+# Get product lists from first result page
+def links_first_page(html_soup):
     links = []
     for i in html_soup.find_all("div", class_="is-visible item-box__container"):
         for t in i.find_all("section", class_="item-box js-catalog-item"):
             for z in t.find_all("figure", class_="item-box__media media media--item"):
-                #print(z.find_all("div", class_="media__placeholder"))
                 for y in z.find_all("div", class_="media__placeholder"):
                     for u in y.find_all("a", class_="media__image-wrapper js-item-link"):
                         links.append(u.get('href'))
+    return links
 
 # ## Get all product lists related to search
-
+def all_product_lists(html_soup):
     next_pages = []
     for i in html_soup.find_all("div", class_="new-page-controls js-page-controls box box--plain"):
         for t in i.find_all("li", class_="new-pagination__step"):
             for z in t.find_all("a", class_="new-pagination__action"):
                 next_pages.append(z.get('href'))
+    return next_pages
 
-    next_pages_unique = np.unique(next_pages).tolist()[1:]
-
-# ## Get all product detail pages from all product list pages
-    for i in next_pages_unique:
+# Get all product detail pages from all product list pages
+def get_product_detail_pages(links, next_pages):
+    for i in next_pages:
         next_url = "https://www.kleiderkreisel.de" + i
-        #print(next_url)
         response = get(next_url, headers=headers)
         html_soup = BeautifulSoup(response.text, 'html.parser')
         links_next_page = []
@@ -51,8 +42,8 @@ def upload_to_bq(request):
                     for y in z.find_all("div", class_="media__placeholder"):
                         for u in y.find_all("a", class_="media__image-wrapper js-item-link"):
                             links_next_page.append(u.get('href'))
-
-# Concatenate all product detail pages to scrape
+    
+    # Concatenate all product detail pages to scrape and create dataframe
     product_details = links + links_next_page
 
     product_detail_pages = []
@@ -61,7 +52,11 @@ def upload_to_bq(request):
         product_detail_pages.append(product_url)
     df = pd.DataFrame({'product_detail_pages': product_detail_pages})
 
+    return df, product_detail_pages
+
+
 # ## Get info from product detail pages
+def get_product_details(df, product_detail_pages):
     df['date'] = dt.datetime.now().date()
     df['product_name'] = np.nan
     df['pic_links'] = np.nan
@@ -136,6 +131,28 @@ def upload_to_bq(request):
         for i in html_product.find_all("span", class_="user-login-name"):
             user_name = i.text
             df['user_name'][index] = user_name
-
-    pandas_gbq.to_gbq(df, dataset_table_id, project, if_exists='append')
     
+    return df
+
+if __name__ == "__main__":
+
+    # Define header and URL
+    headers = ({'User-Agent':
+            'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'})
+    url = "https://www.kleiderkreisel.de/kleidung?order=newest_first&search_text=hemd%20minimum%20xl"
+
+    # Start website request
+    response = get(url, headers=headers)
+    html_soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Run program
+    links = links_first_page(html_soup)
+    next_pages = np.unique(all_product_lists(html_soup)).tolist()[1:]
+    df, product_detail_pages = get_product_detail_pages(links, next_pages)
+    df = get_product_details(df, product_detail_pages)
+
+    # Instantiate BigQuery client and write results to table
+    project = 'kleiderkreisel-scraper'
+    dataset_table_id = 'gunnar.minimum_shirt'
+    client = bigquery.Client()
+    pandas_gbq.to_gbq(df, dataset_table_id, project, if_exists='append')
