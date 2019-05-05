@@ -8,8 +8,8 @@ import datetime as dt
 import regex as re
 from google.cloud import bigquery
 
-project = 'kleiderkreisel-scraper'
-dataset_table_id = 'gunnar.minimum_shirt'
+project = 'your-project'
+dataset_table_id = 'dataset.table_id'
 client = bigquery.Client()
 
 def upload_to_bq(request):
