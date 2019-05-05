@@ -19,4 +19,4 @@ gcloud functions deploy kleiderkreisel_scraper --project project-name --region e
 
 3. Deploy Google Cloud Scheduler [cron job](https://cloud.google.com/scheduler/docs/quickstart) to run once a day
 
-4. Use Google Datastudio to visualise crawling results (*/sql_dashboard*)
+4. Use [Google Datastudio](https://datastudio.google.com/open/1bXc3qFjAdCmSS2uBJQ9RrqvE3LvHnIGU) to visualise crawling results (*/sql_dashboard*)
