@@ -25,4 +25,4 @@ gcloud functions deploy kleiderkreisel_scraper --project project-name --region e
 
 Interactive Google Datastudio dashboard in which different periods of time can be analysed:
 
-[](/img/dashboard.png)
+![](/img/dashboard.png)
