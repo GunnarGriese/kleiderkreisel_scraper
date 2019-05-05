@@ -1,6 +1,6 @@
 # Website crawler for kleiderkreisel.de
 
-This repository contains exemplary code on how to deploy your own website crawler for kleiderkreisel.de search results hosted on GCP. The crawler leverages beautifulsoup as well as pandas to scrape search results and write them to Google BigQuery. The code itself is deployed to Google Cloud Functions and triggered by a cron job hosted on Google Cloud Scheduler. The crwaling results are then visualised in a Google Datastudio dashboard. 
+This repository contains exemplary code on how to deploy your own website crawler for kleiderkreisel.de search results hosted on GCP. The crawler leverages beautifulsoup as well as pandas to scrape search results and write them to Google BigQuery. The code itself is deployed to Google Cloud Functions and triggered by a cron job hosted on Google Cloud Scheduler. The crawling results are then visualised in a Google Datastudio dashboard. 
 
 ## Prerequisites
 
